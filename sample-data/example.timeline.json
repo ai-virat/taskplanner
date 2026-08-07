@@ -1,0 +1,51 @@
+{
+  "timeline": [
+    {
+      "type": "talking_head",
+      "start": "00:00:00",
+      "end": "00:00:08"
+    },
+    {
+      "type": "headline",
+      "asset": "headline_01.png",
+      "start": "00:00:08",
+      "end": "00:00:14",
+      "highlight": "Government announces...",
+      "zoomTarget": { "x": 1450, "y": 620, "scale": 165 }
+    },
+    {
+      "type": "talking_head",
+      "start": "00:00:14",
+      "end": "00:00:15",
+      "jumpCut": true
+    },
+    {
+      "type": "tweet",
+      "asset": "tweet_01.png",
+      "start": "00:00:15",
+      "end": "00:00:20",
+      "returnTransition": "quick_cut"
+    },
+    {
+      "type": "talking_head",
+      "start": "00:00:20",
+      "end": "00:00:30",
+      "punchIn": { "enabled": true, "scale": 112 }
+    },
+    {
+      "type": "document",
+      "asset": "report.pdf",
+      "start": "00:00:30",
+      "end": "00:00:38",
+      "highlight": { "text": "Section 4.2", "mode": "bar", "color": "#FFD400" },
+      "arrows": [
+        { "from": { "x": 200, "y": 400 }, "to": { "x": 420, "y": 460 }, "color": "#FF3B30" }
+      ]
+    },
+    {
+      "type": "talking_head",
+      "start": "00:00:38",
+      "end": "00:00:45"
+    }
+  ]
+}

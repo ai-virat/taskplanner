@@ -1,0 +1,55 @@
+{
+  "id": "com.aidocumentaryeditor.panel",
+  "name": "AI Documentary Editor",
+  "version": "0.1.0",
+  "main": "index.html",
+  "manifestVersion": 5,
+  "host": [
+    {
+      "app": "PPRO",
+      "minVersion": "24.0.0"
+    }
+  ],
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "aiDocumentaryEditorPanel",
+      "label": {
+        "default": "AI Documentary Editor"
+      },
+      "description": "Automates jump cuts and JSON-driven B-roll motion graphics for talking-head documentary edits.",
+      "minimumSize": { "width": 320, "height": 480 },
+      "maximumSize": { "width": 900, "height": 1400 },
+      "preferredDockedSize": { "width": 380, "height": 640 },
+      "preferredFloatingSize": { "width": 420, "height": 720 },
+      "icons": [
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/icon.png",
+          "scale": [1, 2],
+          "theme": ["darkest", "dark", "medium", "lightest", "light", "all"]
+        }
+      ]
+    }
+  ],
+  "icons": [
+    {
+      "width": 48,
+      "height": 48,
+      "path": "icons/icon.png",
+      "scale": [1, 2],
+      "theme": ["darkest", "dark", "medium", "lightest", "light", "all"]
+    }
+  ],
+  "requiredPermissions": {
+    "localFileSystem": "fullAccess",
+    "clipboard": "readAndWrite",
+    "launchProcess": {
+      "schemes": ["https"]
+    },
+    "network": {
+      "domains": "none"
+    }
+  }
+}

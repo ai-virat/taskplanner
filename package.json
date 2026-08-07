@@ -1,0 +1,20 @@
+{
+  "name": "ai-documentary-editor",
+  "version": "0.1.0",
+  "description": "Premiere Pro UXP extension that automates documentary-style editing (talking-head jump cuts + JSON-driven B-roll motion graphics) from a predefined edit plan.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -p tsconfig.json --watch",
+    "test:parser": "tsx src/core/__tests__/TimelineParser.test.ts",
+    "test:timecode": "tsx src/core/__tests__/TimecodeUtils.test.ts",
+    "test": "npm run test:timecode && npm run test:parser"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "tsx": "^4.16.5",
+    "@types/node": "^20.14.15"
+  }
+}
