@@ -32,6 +32,17 @@ export interface ExtensionOptions {
   safeMargins: SafeMargins;
   /** Whether motion blur is baked into generated animation keyframes. */
   motionBlur: boolean;
+  /**
+   * Absolute paths to editor-authored graphic templates (e.g. .mogrt files)
+   * used to render arrow/circle/highlight-bar annotations. An annotation
+   * whose template isn't configured here is skipped with a warning rather
+   * than silently guessed at -- see docs/ARCHITECTURE.md.
+   */
+  graphicsTemplates: {
+    arrow?: string;
+    circle?: string;
+    highlightBar?: string;
+  };
 }
 
 export const DEFAULT_EXTENSION_OPTIONS: ExtensionOptions = {
@@ -47,4 +58,5 @@ export const DEFAULT_EXTENSION_OPTIONS: ExtensionOptions = {
   defaultZoom: 115,
   safeMargins: { top: 5, bottom: 5, left: 5, right: 5 },
   motionBlur: true,
+  graphicsTemplates: {},
 };

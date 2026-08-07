@@ -12,3 +12,17 @@ export * from "./core/TimecodeUtils.js";
 export * from "./core/TimelineParser.js";
 export * from "./core/Logger.js";
 export * from "./core/errors.js";
+
+export * from "./host/PremiereTypes.js";
+export * from "./host/IPremiereHost.js";
+export * from "./host/MockPremiereHost.js";
+export * from "./host/JumpCutEngine.js";
+export * from "./host/TimelineBuilder.js";
+
+export * from "./animations/types.js";
+export * from "./animations/RevealAnimation.js";
+export * from "./animations/AnnotationAnimations.js";
+export * from "./animations/TalkingHeadAnimations.js";
+export * from "./animations/SafeZoom.js";
+export * from "./animations/presets.js";
+export * from "./animations/AnimationEngine.js";

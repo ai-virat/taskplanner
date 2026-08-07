@@ -10,7 +10,14 @@
     "watch": "tsc -p tsconfig.json --watch",
     "test:parser": "tsx src/core/__tests__/TimelineParser.test.ts",
     "test:timecode": "tsx src/core/__tests__/TimecodeUtils.test.ts",
-    "test": "npm run test:timecode && npm run test:parser"
+    "test:jumpcut": "tsx src/host/__tests__/JumpCutEngine.test.ts",
+    "test:builder": "tsx src/host/__tests__/TimelineBuilder.test.ts",
+    "test:reveal": "tsx src/animations/__tests__/RevealAnimation.test.ts",
+    "test:annotations": "tsx src/animations/__tests__/AnnotationAnimations.test.ts",
+    "test:talkinghead": "tsx src/animations/__tests__/TalkingHeadAnimations.test.ts",
+    "test:safezoom": "tsx src/animations/__tests__/SafeZoom.test.ts",
+    "test:animation-engine": "tsx src/animations/__tests__/AnimationEngine.test.ts",
+    "test": "npm run test:timecode && npm run test:parser && npm run test:jumpcut && npm run test:builder && npm run test:reveal && npm run test:annotations && npm run test:talkinghead && npm run test:safezoom && npm run test:animation-engine"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
