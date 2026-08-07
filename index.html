@@ -4,30 +4,208 @@
     <meta charset="utf-8" />
     <title>AI Documentary Editor</title>
     <style>
+      * {
+        box-sizing: border-box;
+      }
       body {
-        font-family: sans-serif;
+        font-family: -apple-system, "Segoe UI", sans-serif;
         margin: 0;
-        padding: 16px;
+        padding: 12px;
         color: #ddd;
         background: #1e1e1e;
+        font-size: 12px;
       }
       h1 {
-        font-size: 14px;
-        margin: 0 0 8px;
+        font-size: 13px;
+        margin: 0 0 4px;
       }
-      p {
-        font-size: 12px;
-        line-height: 1.5;
+      h2 {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
         color: #999;
+        margin: 16px 0 6px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 4px;
+      }
+      .subtitle {
+        color: #888;
+        margin: 0 0 12px;
+        line-height: 1.4;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+      button {
+        flex: 1 1 auto;
+        min-width: 110px;
+        background: #333;
+        color: #eee;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 7px 10px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+      button:hover {
+        background: #3d3d3d;
+      }
+      button.primary {
+        background: #2f6fed;
+        border-color: #2f6fed;
+      }
+      button.primary:hover {
+        background: #3a7bff;
+      }
+      #options-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+      }
+      #options-form .field {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      #options-form .field.span-2 {
+        grid-column: 1 / -1;
+      }
+      #options-form label {
+        color: #aaa;
+      }
+      #options-form input,
+      #options-form select {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        color: #eee;
+        border-radius: 3px;
+        padding: 4px 6px;
+      }
+      .margins-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .margins-grid label {
+        display: block;
+        font-size: 10px;
+        color: #888;
+      }
+      #log {
+        margin-top: 8px;
+        max-height: 160px;
+        overflow-y: auto;
+        background: #151515;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 6px 8px;
+      }
+      .log-line {
+        color: #9ecbff;
+        white-space: pre-wrap;
+        word-break: break-word;
+        padding: 2px 0;
+        border-bottom: 1px solid #232323;
+      }
+      .log-line:last-child {
+        border-bottom: none;
       }
     </style>
   </head>
   <body>
     <h1>AI Documentary Editor</h1>
-    <p>
-      Panel UI ships in Module 4. This build contains the core timeline
-      engine only (JSON parsing/validation + timecode utilities) -- see
-      <code>src/</code> and run <code>npm test</code> to verify it.
+    <p class="subtitle">
+      Executes a predefined Timeline JSON edit plan: talking-head jump cuts + JSON-driven B-roll motion graphics.
+      It does not decide the story -- import a plan below.
     </p>
+
+    <h2>Import</h2>
+    <div class="row">
+      <button id="btn-import-video">Import Video</button>
+      <button id="btn-import-transcript">Import Transcript</button>
+    </div>
+    <div class="row">
+      <button id="btn-import-assets">Import Assets</button>
+      <button id="btn-import-json">Import JSON</button>
+    </div>
+
+    <h2>Build</h2>
+    <div class="row">
+      <button id="btn-generate-timeline" class="primary">Generate Timeline</button>
+      <button id="btn-generate-animations">Generate Animations</button>
+    </div>
+    <div class="row">
+      <button id="btn-update-timeline">Update Timeline</button>
+    </div>
+
+    <h2>Options</h2>
+    <form id="options-form">
+      <div class="field">
+        <label for="animationSpeed">Animation Speed</label>
+        <input id="animationSpeed" name="animationSpeed" type="number" step="0.1" min="0.1" />
+      </div>
+      <div class="field">
+        <label for="defaultZoom">Default Zoom (%)</label>
+        <input id="defaultZoom" name="defaultZoom" type="number" step="1" min="100" />
+      </div>
+
+      <div class="field">
+        <label for="highlightColor">Highlight Color</label>
+        <input id="highlightColor" name="highlightColor" type="color" />
+      </div>
+      <div class="field">
+        <label for="transitionStyle">Transition Style</label>
+        <select id="transitionStyle" name="transitionStyle">
+          <option value="fade">Fade</option>
+          <option value="quick_cut">Quick Cut</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="arrowColor">Arrow Color</label>
+        <input id="arrowColor" name="arrowColor" type="color" />
+      </div>
+      <div class="field">
+        <label for="arrowWidth">Arrow Width (px)</label>
+        <input id="arrowWidth" name="arrowWidth" type="number" step="1" min="1" />
+      </div>
+
+      <div class="field span-2">
+        <label>Safe Margins (%)</label>
+        <div class="margins-grid">
+          <div>
+            <label for="safeMarginTop">Top</label>
+            <input id="safeMarginTop" name="safeMarginTop" type="number" step="1" min="0" max="45" />
+          </div>
+          <div>
+            <label for="safeMarginBottom">Bottom</label>
+            <input id="safeMarginBottom" name="safeMarginBottom" type="number" step="1" min="0" max="45" />
+          </div>
+          <div>
+            <label for="safeMarginLeft">Left</label>
+            <input id="safeMarginLeft" name="safeMarginLeft" type="number" step="1" min="0" max="45" />
+          </div>
+          <div>
+            <label for="safeMarginRight">Right</label>
+            <input id="safeMarginRight" name="safeMarginRight" type="number" step="1" min="0" max="45" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="motionBlur">
+          <input id="motionBlur" name="motionBlur" type="checkbox" style="width: auto" />
+          Motion Blur
+        </label>
+      </div>
+    </form>
+
+    <h2>Log</h2>
+    <div id="log"></div>
+
+    <script type="module" src="./dist/ui/PanelController.js"></script>
   </body>
 </html>

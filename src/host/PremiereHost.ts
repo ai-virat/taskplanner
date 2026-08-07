@@ -40,6 +40,22 @@ export class PremiereHost implements IPremiereHost {
     this.ppro = require("premierepro") as typeof PremiereProModule;
   }
 
+  /**
+   * NOTE: same caveat as getSequenceFrameSize()/getAssetDimensions() --
+   * creating+activating a sequence via UXP typically goes through the
+   * project's sequence-creation API (e.g. cloning a sequence preset), whose
+   * exact call needs confirming on-host. Throws a clear, actionable error
+   * rather than silently no-oping, so BatchProcessor callers see it fail
+   * loudly instead of quietly reusing whatever sequence was already active.
+   */
+  async createSequence(name: string): Promise<void> {
+    throw new Error(
+      `createSequence("${name}") is not yet wired to a verified Premiere UXP API call -- ` +
+        "for now, create/activate each batch job's sequence manually before running it, " +
+        "or confirm the sequence-creation API on-host and implement this method"
+    );
+  }
+
   async importAssets(absolutePaths: string[]): Promise<Map<string, ProjectItemRef>> {
     const project = await this.getActiveProject();
     await project.importFiles(absolutePaths, /* suppressUI */ true);

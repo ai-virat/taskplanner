@@ -23,6 +23,7 @@ export interface RecordedClip {
 export class MockPremiereHost implements IPremiereHost {
   readonly clips: RecordedClip[] = [];
   readonly importedAssets: string[] = [];
+  readonly createdSequences: string[] = [];
   private nextClipId = 1;
 
   constructor(
@@ -31,6 +32,12 @@ export class MockPremiereHost implements IPremiereHost {
     private readonly frameSize: { width: number; height: number } = { width: 1920, height: 1080 },
     private readonly assetDimensions: Map<string, { width: number; height: number }> = new Map()
   ) {}
+
+  async createSequence(name: string): Promise<void> {
+    this.createdSequences.push(name);
+    // Clips placed before/after belong to different sequences in real Premiere; the mock
+    // doesn't model multiple sequences, but BatchProcessor tests only assert on call order/count.
+  }
 
   async importAssets(absolutePaths: string[]): Promise<Map<string, ProjectItemRef>> {
     const result = new Map<string, ProjectItemRef>();

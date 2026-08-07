@@ -10,9 +10,10 @@
    or `ExtensionOptions` (global defaults, editable in the panel). See
    `src/types/config.types.ts`.
 3. **Modular, layered, testable independently of Premiere.** The core
-   engine (types, timecode math, JSON validation) has zero dependency on
-   the UXP/Premiere host APIs, so it's unit-testable with plain Node (see
-   `npm test`). Only the host-bridge and UI layers touch Premiere.
+   engine, host-orchestration logic, and animation math all have zero
+   dependency on Premiere actually being installed -- they're unit-tested
+   with plain Node against `MockPremiereHost` (see `npm test`). Only
+   `PremiereHost.ts` and the UI's click handlers touch the real UXP APIs.
 
 ## Layers
 
@@ -20,31 +21,44 @@
 src/
   types/            Pure TypeScript contracts (Timeline JSON schema, options).
                      No logic, no I/O.
+    uxp-shims.d.ts     Ambient types for the host-injected "premierepro"/"uxp"
+                       modules -- see the caveat at the top of that file.
 
   core/              Host-independent engine.
-    TimecodeUtils.ts   Timecode string <-> seconds <-> Premiere ticks.
-    TimelineParser.ts  Validates raw JSON -> NormalizedTimelineItem[].
-    Logger.ts          Leveled logger shared by every layer.
-    errors.ts          Typed error classes (TimelineValidationError, MissingAssetError).
+    TimecodeUtils.ts    Timecode string <-> seconds <-> Premiere ticks.
+    TimelineParser.ts   Validates raw JSON -> NormalizedTimelineItem[].
+    TranscriptParser.ts .srt/.vtt/.txt -> cues (reference/preview only).
+    BatchProcessor.ts   Runs multiple videos through one TimelineBuilder,
+                        one sequence per job, isolating per-job failures.
+    Logger.ts           Leveled logger shared by every layer.
+    errors.ts           Typed error classes (TimelineValidationError, MissingAssetError).
 
-  host/  (module 2)  Premiere UXP host bridge. Wraps the Premiere Pro UXP
-                     scripting API (project/sequence/track/clip/keyframe
-                     operations). This is the ONLY layer allowed to call
-                     into `require("premierepro")`.
+  host/              Premiere UXP host bridge.
+    IPremiereHost.ts    The full contract the rest of the app depends on.
+    PremiereHost.ts     Real adapter -- the ONLY file allowed to
+                        `require("premierepro")`.
+    MockPremiereHost.ts In-memory test double implementing the same contract.
+    JumpCutEngine.ts    Pure pause-removal math (PAUSE markers -> keep segments).
+    TimelineBuilder.ts  Orchestrator: import -> place talking-head (+ jump
+                        cuts/punch-in) -> place B-roll (+ animations/annotations).
 
-  animations/  (module 3)
-    presets/          One file per reusable motion preset (HeadlineReveal,
-                       TweetReveal, DocumentReveal, ArrowAnnotation,
-                       CircleAnnotation, HighlightBar, ...). Each preset is a
-                       pure function: (NormalizedTimelineItem, ExtensionOptions)
-                       -> a declarative list of keyframe operations, which the
-                       host bridge then applies. Presets do not call the
-                       Premiere API directly -- this keeps them unit-testable
-                       and reusable/editable independent of the host.
+  animations/        Reusable, JSON-configurable motion preset engine.
+    types.ts            RevealPresetConfig / AnimationPlan / AnnotationPlan.
+    RevealAnimation.ts  Shared fade/scale/position/rotation timing math.
+    presets.ts          The 10 named Motion Presets (Headline/Tweet/Document/
+                        Article/Map/Graph/Statistics/Comparison/Browser/Photo
+                        Reveal) as editable RevealPresetConfig data.
+    AnnotationAnimations.ts  Arrow / Circle / Highlight-bar keyframe math.
+    TalkingHeadAnimations.ts Punch-in keyframe math.
+    SafeZoom.ts          Bonus: auto-center + clamp a zoomTarget to the
+                        asset/safe-margin bounds.
+    AnimationEngine.ts   Ties the above together per asset item.
 
-  ui/  (module 4)    UXP panel (index.html + panel controller). Talks only
-                     to core/ and host/, never re-implements validation or
-                     animation logic itself.
+  ui/                UXP panel.
+    state.ts            ExtensionOptions store (localStorage-persisted).
+    PanelController.ts  DOM wiring only -- delegates everything else to
+                        core/host/animations.
+index.html            Panel markup, loads dist/ui/PanelController.js.
 ```
 
 ## Data flow
@@ -53,18 +67,23 @@ src/
 Timeline JSON (+ asset folder listing)
         |
         v
-TimelineParser.parse()          <- src/core/TimelineParser.ts
+TimelineParser.parse()            <- src/core/TimelineParser.ts
         |
         v
-ParsedTimeline                  <- normalized items, seconds + ticks resolved,
-                                    asset references checked
+ParsedTimeline                    <- normalized items, seconds + ticks resolved,
+                                      asset references checked
         |
         v
-Animation preset resolution     <- module 3: per-item type -> preset -> keyframe plan
+TimelineBuilder.build()           <- src/host/TimelineBuilder.ts
+   ├─ talking-head: JumpCutEngine computes keep-segments from PAUSE markers,
+   │  each segment placed on track 0; punch-in keyframes applied if requested
+   └─ B-roll: AnimationEngine resolves a preset + zoomTarget/arrows/circles/
+      highlight into keyframes, placed on track 1 (+ annotation clips on
+      track 2, if a graphics template is configured for that annotation kind)
         |
         v
-Premiere host bridge            <- module 2: applies clips/keyframes/markers
-        |                            to the active sequence via the UXP API
+IPremiereHost                     <- PremiereHost.ts applies it all to the
+                                      real active sequence via the UXP API
         v
 Professional Timeline (in Premiere)
 ```
@@ -78,12 +97,37 @@ that edits remain accurate regardless of the sequence's frame rate/timebase.
 (`PREMIERE_TICKS_PER_SECOND = 254_016_000_000`), so no other module
 hardcodes the tick rate or does its own rounding.
 
+## Honest limitations (read before running on a real project)
+
+This was built and fully tested in a sandbox with **no Premiere Pro
+instance available** -- everything host-independent (parsing, jump-cut
+math, animation math, orchestration logic) is verified by `npm test` (63
+assertions, `npm run build` clean under strict TypeScript), and the panel
+UI was smoke-tested in a headless browser. What could **not** be verified
+against real Premiere:
+
+- **`src/types/uxp-shims.d.ts` and `src/host/PremiereHost.ts`**: Adobe's
+  `premierepro` UXP module's exact method names/signatures are modeled
+  from the published scripting guide, not verified against a running
+  instance. `IPremiereHost` is the real contract the rest of the app is
+  built against, so a mismatch here is an isolated fix in these two files.
+- **`getSequenceFrameSize()`, `getAssetDimensions()`, `createSequence()`**
+  in `PremiereHost.ts` are explicitly flagged (with a `logger.warn` or a
+  thrown error) as needing their exact host API confirmed -- they don't
+  silently pretend to work.
+- **Arrow/circle/highlight-bar annotations** are placed as clips using a
+  graphic template you configure in `ExtensionOptions.graphicsTemplates`
+  (a `.mogrt`/Essential Graphics asset you author once) -- the extension
+  computes correct growth/bounce/fade keyframes for it but does not
+  generate vector graphics from nothing. An annotation with no template
+  configured is skipped with a warning, not silently dropped or faked.
+
 ## Status
 
 | Module | Contents | Status |
 |---|---|---|
-| 1 | Project scaffold, types, `TimecodeUtils`, `TimelineParser`, `Logger` | **Done** (this delivery) |
-| 2 | Premiere host bridge (import media, place clips, jump cuts, pause removal, punch-in, markers) | Planned |
-| 3 | Animation preset engine (headline/tweet/document/screenshot/arrow/circle/highlight-bar presets) | Planned |
-| 4 | UXP panel UI (import buttons, Generate/Update Timeline, Options) | Planned |
-| 5 | Bonus: OCR headline detection, auto paragraph bounds, auto-arrow generation, batch processing | Planned, optional |
+| 1 | Project scaffold, types, `TimecodeUtils`, `TimelineParser`, `Logger` | **Done**, tested |
+| 2 | Premiere host bridge: `IPremiereHost`, `PremiereHost`, `MockPremiereHost`, `JumpCutEngine`, `TimelineBuilder` | **Done**, tested against `MockPremiereHost`; `PremiereHost`'s exact API calls need on-host verification (see above) |
+| 3 | Animation preset engine: 10 Motion Presets, arrow/circle/highlight-bar math, punch-in, safe zoom | **Done**, tested |
+| 4 | UXP panel UI (import buttons, Generate/Update Timeline, Options) | **Done**, smoke-tested in a headless browser |
+| 5 | Bonus: batch processing (done), intelligent safe zoom (done, see `SafeZoom.ts`); OCR/auto-paragraph-detection (not built -- see README) | Partially done |

@@ -13,6 +13,15 @@
 import type { ClipRef, KeyframeOp, MarkerInfo, ProjectItemRef } from "./PremiereTypes.js";
 
 export interface IPremiereHost {
+  /**
+   * Creates a new sequence and makes it the active sequence, so subsequent
+   * placeClip/applyKeyframes calls target it. Used by BatchProcessor
+   * (src/core/BatchProcessor.ts) to give each video in a batch its own
+   * sequence instead of piling every job onto whatever sequence was active
+   * when the panel launched.
+   */
+  createSequence(name: string): Promise<void>;
+
   /** Imports each absolute file path into the project bin. Returns a ref keyed by the original path. */
   importAssets(absolutePaths: string[]): Promise<Map<string, ProjectItemRef>>;
 

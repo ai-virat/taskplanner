@@ -12,6 +12,8 @@ export * from "./core/TimecodeUtils.js";
 export * from "./core/TimelineParser.js";
 export * from "./core/Logger.js";
 export * from "./core/errors.js";
+export * from "./core/TranscriptParser.js";
+export * from "./core/BatchProcessor.js";
 
 export * from "./host/PremiereTypes.js";
 export * from "./host/IPremiereHost.js";
